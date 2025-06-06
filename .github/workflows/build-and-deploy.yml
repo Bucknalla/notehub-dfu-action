@@ -1,0 +1,54 @@
+name: Build and Deploy Firmware
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      target_device:
+        description: 'Target device type (swan or cygnet)'
+        required: true
+        default: 'swan'
+        type: string
+      device_uid:
+        description: 'Target Device UID (optional - leave empty for staging)'
+        required: false
+        type: string
+      project_uid:
+        description: 'Notehub Project UID'
+        required: true
+        default: 'app:662bd350-d8b5-406e-b318-6c448ad782e7'
+        type: string
+      tag:
+        description: 'Target devices with tag (optional)'
+        required: false
+        type: string
+
+jobs:
+  build-firmware:
+    uses: ./.github/workflows/arduino-build.yml
+    with:
+      target_device: ${{ inputs.target_device || 'swan' }}
+
+  deploy-firmware:
+    needs: build-firmware
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download firmware artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-firmware.outputs.firmware_name }}
+          path: ./firmware
+
+      - name: Deploy to Notehub
+        uses: ./
+        with:
+          project_uid: ${{ inputs.project_uid || 'app:662bd350-d8b5-406e-b318-6c448ad782e7' }}
+          firmware_file: ${{ needs.build-firmware.outputs.firmware_filename }}
+          client_id: ${{ secrets.NOTEHUB_CLIENT_ID }}
+          client_secret: ${{ secrets.NOTEHUB_CLIENT_SECRET }}
+          device_uid: ${{ inputs.device_uid || '' }}
+          tag: ${{ inputs.tag || '' }}

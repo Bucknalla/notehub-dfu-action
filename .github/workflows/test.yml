@@ -1,0 +1,80 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Verify dependencies
+      run: go mod verify
+
+    - name: Run tests
+      run: go test ./src -v -race -coverprofile=coverage.out
+
+    - name: Generate coverage report
+      run: go tool cover -html=coverage.out -o coverage.html
+
+    - name: Upload coverage to artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage.html
+        retention-days: 30
+
+    # - name: Check test coverage
+    #   run: |
+    #     COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
+    #     echo "Test coverage: ${COVERAGE}%"
+    #     if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+    #       echo "❌ Test coverage ${COVERAGE}% is below 80% threshold"
+    #       exit 1
+    #     else
+    #       echo "✅ Test coverage ${COVERAGE}% meets the 80% threshold"
+    #     fi
+
+  build:
+    name: Build Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+
+    - name: Vet
+      run: go vet ./src/main.go
+
+    - name: Build
+      run: go build -v ./src/main.go

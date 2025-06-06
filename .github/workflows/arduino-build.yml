@@ -1,0 +1,118 @@
+name: Build Arduino Firmware
+
+on:
+  workflow_call:
+    inputs:
+      target_device:
+        description: 'Target device type (swan or cygnet)'
+        required: true
+        default: 'swan'
+        type: string
+    outputs:
+      firmware_path:
+        description: "Path to the built firmware file"
+        value: ${{ jobs.build.outputs.firmware_path }}
+      firmware_name:
+        description: "Name of the firmware artifact"
+        value: ${{ jobs.build.outputs.firmware_name }}
+      firmware_filename:
+        description: "Actual filename of the firmware binary"
+        value: ${{ jobs.build.outputs.firmware_filename }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      firmware_path: ${{ steps.set-outputs.outputs.firmware_path }}
+      firmware_name: ${{ steps.set-outputs.outputs.firmware_name }}
+      firmware_filename: ${{ steps.set-outputs.outputs.firmware_filename }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Arduino CLI
+      uses: arduino/setup-arduino-cli@v2
+
+    - name: Install Arduino CLI core index
+      run: arduino-cli core update-index
+
+    - name: Install Arduino cores for Blues Swan R5 & Cygnet
+      run: |
+        # Add STM32 board manager URL
+        arduino-cli config init
+        arduino-cli config add board_manager.additional_urls https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json
+
+        # Update index with new URLs
+        arduino-cli core update-index
+
+        # Install STM32 core
+        arduino-cli core install STMicroelectronics:stm32
+
+        # List available boards to verify installation
+        arduino-cli board listall | grep -i Blues boards || echo "Blues boards not found."
+
+    - name: Install note-arduino library
+      run: arduino-cli lib install "Blues Wireless Notecard"
+
+    - name: List installed cores and libraries (debug)
+      run: |
+        arduino-cli core list
+        arduino-cli lib list
+
+    - name: Validate target device
+      run: |
+        if [[ "${{ inputs.target_device }}" != "swan" && "${{ inputs.target_device }}" != "cygnet" ]]; then
+          echo "Error: target_device must be 'swan' or 'cygnet'"
+          exit 1
+        fi
+
+    - name: Compile Arduino sketch for Swan R5
+      if: inputs.target_device == 'swan'
+      run: |
+        arduino-cli compile \
+          --fqbn STMicroelectronics:stm32:Blues \
+          --output-dir ./build/swan \
+          --export-binaries \
+          examples/arduino/simple/simple.ino
+
+    - name: Compile Arduino sketch for Cygnet
+      if: inputs.target_device == 'cygnet'
+      run: |
+        arduino-cli compile \
+          --fqbn STMicroelectronics:stm32:Blues:pnum=CYGNET \
+          --output-dir ./build/cygnet \
+          --export-binaries \
+          examples/arduino/simple/simple.ino
+
+    - name: List build outputs (debug)
+      run: ls -la ./build/
+
+    - name: Set firmware outputs
+      id: set-outputs
+      run: |
+        if [[ "${{ inputs.target_device }}" == "swan" ]]; then
+          echo "firmware_path=./build/swan/simple.ino.bin" >> $GITHUB_OUTPUT
+          echo "firmware_name=arduino-firmware-swan" >> $GITHUB_OUTPUT
+          echo "firmware_filename=simple.ino.bin" >> $GITHUB_OUTPUT
+        else
+          echo "firmware_path=./build/cygnet/simple.ino.bin" >> $GITHUB_OUTPUT
+          echo "firmware_name=arduino-firmware-cygnet" >> $GITHUB_OUTPUT
+          echo "firmware_filename=simple.ino.bin" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Upload Swan firmware binary as artifact
+      if: inputs.target_device == 'swan'
+      uses: actions/upload-artifact@v4
+      with:
+        name: arduino-firmware-swan
+        path: ./build/swan/simple.ino.bin
+        retention-days: 30
+
+    - name: Upload Cygnet firmware binary as artifact
+      if: inputs.target_device == 'cygnet'
+      uses: actions/upload-artifact@v4
+      with:
+        name: arduino-firmware-cygnet
+        path: ./build/cygnet/simple.ino.bin
+        retention-days: 30

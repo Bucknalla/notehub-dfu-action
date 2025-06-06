@@ -1,0 +1,53 @@
+name: 'Deploy Outbound Host Firmware to Notecard'
+description: 'Deploy outbound host firmware to a Notecard device via Notehub API'
+branding:
+  icon: 'upload'
+  color: 'blue'
+
+inputs:
+  project_uid:
+    description: 'Notehub Project UID'
+    required: true
+  firmware_file:
+    description: 'Path to firmware file (relative to repo root)'
+    required: true
+  client_id:
+    description: 'Notehub OAuth2 Client ID'
+    required: true
+  client_secret:
+    description: 'Notehub OAuth2 Client Secret'
+    required: true
+  device_uid:
+    description: 'Device UID (optional - use if targeting specific device)'
+    required: false
+  tag:
+    description: 'Device tag (optional - use if targeting by tag)'
+    required: false
+  serial_number:
+    description: 'Device serial number (optional)'
+    required: false
+  fleet_uid:
+    description: 'Fleet UID (optional)'
+    required: false
+  product_uid:
+    description: 'Product UID (optional)'
+    required: false
+  notecard_firmware:
+    description: 'Notecard firmware version (optional)'
+    required: false
+  location:
+    description: 'Device location (optional)'
+    required: false
+  sku:
+    description: 'Notecard SKU (optional)'
+    required: false
+
+outputs:
+  deployment_status:
+    description: 'Status of the firmware deployment'
+  firmware_filename:
+    description: 'Name of the uploaded firmware file'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
