@@ -1,6 +1,6 @@
-# Notehub Outbound Firmware Deployment GitHub Action
+# Notehub Outboard Firmware Deployment GitHub Action
 
-A Go-based GitHub Action for deploying [outbound firmware](https://dev.blues.io/notehub/host-firmware-updates/notecard-outboard-firmware-update/#notecard-outboard-firmware-update) updates to devices via the Notehub API. This action handles OAuth2 authentication, firmware upload, and outbound device firmware update (ODFU) triggering.
+A Go-based GitHub Action for deploying [outboard firmware](https://dev.blues.io/notehub/host-firmware-updates/notecard-outboard-firmware-update/#notecard-outboard-firmware-update) updates to devices via the Notehub API. This action handles OAuth2 authentication, firmware upload, and outboard device firmware update (ODFU) triggering.
 
 > [!WARNING]
 > This action is experimental and support is not guaranteed at this time. This is subject to change.
@@ -8,7 +8,7 @@ A Go-based GitHub Action for deploying [outbound firmware](https://dev.blues.io/
 ## Features
 
 - **OAuth2 Authentication**: Secure authentication with Notehub API on a per-project basis
-- **Binary Firmware Upload**: Direct upload of outbound firmware binaries to Notehub
+- **Binary Firmware Upload**: Direct upload of outboard firmware binaries to Notehub
 - **Device Targeting**: Multiple targeting options (device UID, tags, serial numbers, fleets, etc.)
 - **Docker-based**: Lightweight, containerized execution
 

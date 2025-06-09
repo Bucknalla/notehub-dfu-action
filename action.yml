@@ -1,5 +1,5 @@
-name: 'Deploy Outbound Host Firmware to Notecard'
-description: 'Deploy outbound host firmware to a Notecard device via Notehub API'
+name: 'Deploy Outboard Host Firmware to Notecard'
+description: 'Deploy outboard host firmware to a Notecard device via Notehub API'
 branding:
   icon: 'upload'
   color: 'blue'
